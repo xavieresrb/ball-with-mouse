@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta content="utf-8" http-equiv="encoding" />
+  </head>
+  <body>
+    <canvas id="gameCanvas" width="1000" height="800"></canvas>
+    <script>
+      let ballX = 75;
+      let ballY = 75;
+      let ballSpeedX = 14;
+      let ballSpeedY = 24;
+      let canvas, canvasContext;
+
+      window.onload = function () {
+        canvas = document.getElementById('gameCanvas');
+        canvasContext = canvas.getContext('2d');
+
+        let framesPerSecond = 60;
+
+        canvasContext.fillStyle = 'black';
+        canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+
+        setInterval(updateAll, 1000 / framesPerSecond);
+      };
+
+      function updateAll() {
+        ballX = ballX + ballSpeedX;
+        ballY = ballY + ballSpeedY;
+
+        if (ballX > canvas.width || ballX < 0) {
+          ballSpeedX = -1 * ballSpeedX;
+        }
+        if (ballY > canvas.height || ballY < 0) {
+          ballSpeedY = -1 * ballSpeedY;
+        }
+
+        canvasContext.fillStyle = 'red';
+        canvasContext.beginPath();
+        canvasContext.arc(ballX, ballY, 10, 0, Math.PI * 2, true);
+        canvasContext.fill();
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta content="utf-8" http-equiv="encoding" />
+  </head>
+  <body>
+    <canvas id="gameCanvas" width="1000" height="800"></canvas>
+    <script>
+      const BALL_SIZE = 14;
+      const BALL_RADIUS = BALL_SIZE / 2;
+      const PADDLE_WIDTH = 100;
+      const PADDLE_THICKNESS = 10;
+      const PADDLE_DIST_FROM_EDGE = 60;
+      const BRICK_W = 100;
+      const BRICK_H = 50;
+      const BRICK_COLS = 10;
+      const BRICK_ROWS = 4;
+      const BRICK_GAP = 2;
+      const brickGrid = new Array(BRICK_COLS * BRICK_ROWS);
+
+      let ballX = 75;
+      let ballY = 75;
+      let ballSpeedX = 8;
+      let ballSpeedY = 8;
+      let canvas, canvasContext;
+      let paddleX = 400;
+      let mouseX = 0;
+      let mouseY = 0;
+
+      function brickReset() {
+        for (let i = 0; i < BRICK_COLS * BRICK_ROWS; i++) {
+          brickGrid[i] = true;
+        }
+        brickGrid[BRICK_COLS] = false;
+        brickGrid[BRICK_COLS * 2 + 1] = false;
+      }
+
+      window.onload = function () {
+        canvas = document.getElementById('gameCanvas');
+        canvasContext = canvas.getContext('2d');
+
+        let framesPerSecond = 30;
+
+        brickReset();
+
+        setInterval(updateAll, 1000 / framesPerSecond);
+
+        canvas.addEventListener('mousemove', updateMousePos);
+      };
+
+      function updateMousePos(evt) {
+        const rect = canvas.getBoundingClientRect();
+        const root = document.documentElement;
+
+        mouseX = evt.clientX - rect.left - root.scrollLeft;
+        mouseY = evt.clientY - rect.top - root.scrollTop;
+
+        paddleX = mouseX - PADDLE_WIDTH / 2; // center the x coordinate to the middle of the paddle
+      }
+
+      function ballReset() {
+        ballX = canvas.width / 2;
+        ballY = canvas.height / 2;
+      }
+
+      function moveAll() {
+        ballX = ballX + ballSpeedX;
+        ballY = ballY + ballSpeedY;
+
+        if (ballX < BALL_RADIUS) {
+          // left
+          ballSpeedX = -1 * ballSpeedX;
+        } else if (ballX > canvas.width - BALL_RADIUS) {
+          // right
+          ballSpeedX = -1 * ballSpeedX;
+        } else if (ballY < BALL_RADIUS) {
+          // top
+          ballSpeedY = -1 * ballSpeedY;
+        }
+        if (ballY > canvas.height - BALL_RADIUS) {
+          // bottom
+          ballReset();
+        }
+
+        const paddleTopEdgeY = canvas.height - PADDLE_DIST_FROM_EDGE;
+        const paddleBottomEdgeY = paddleTopEdgeY + PADDLE_THICKNESS;
+        const paddleLeftEdgeX = paddleX;
+        const paddleRightEdgeX = paddleLeftEdgeX + PADDLE_WIDTH;
+
+        if (
+          ballY + BALL_RADIUS > paddleTopEdgeY && // below the top of paddle
+          ballY - BALL_RADIUS < paddleBottomEdgeY && // above the bottom of paddle
+          ballX + BALL_RADIUS > paddleLeftEdgeX && // right of the left side of paddle
+          ballX - BALL_RADIUS < paddleRightEdgeX // left of the right side of paddle
+        ) {
+          ballSpeedY = -1 * ballSpeedY;
+
+          const centerOfPaddleX = paddleX + PADDLE_WIDTH / 2;
+          const ballDistFromPaddleCenterX = ballX - centerOfPaddleX;
+
+          ballSpeedX = ballDistFromPaddleCenterX * 0.5;
+        }
+      }
+
+      function colorRect(topLeftX, topLeftY, boxWidth, boxHeight, fillColor) {
+        canvasContext.fillStyle = fillColor;
+        canvasContext.fillRect(topLeftX, topLeftY, boxWidth, boxHeight);
+      }
+
+      function colorCircle(centerX, centerY, radius, fillColor) {
+        canvasContext.fillStyle = fillColor;
+        canvasContext.beginPath();
+        canvasContext.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
+        canvasContext.fill();
+      }
+
+      function colorText(words, textX, textY, fillColor) {
+        canvasContext.fillStyle = fillColor;
+        canvasContext.fillText(words, textX, textY);
+      }
+
+      function drawBricks() {
+        for (let row = 0; row < BRICK_ROWS; row++) {
+          for (let col = 0; col < BRICK_COLS; col++) {
+            const index = BRICK_COLS * row + col;
+
+            if (brickGrid[index]) {
+              colorRect(
+                BRICK_W * col,
+                BRICK_H * row,
+                BRICK_W - BRICK_GAP,
+                BRICK_H - BRICK_GAP,
+                'blue'
+              );
+            }
+          }
+        }
+      }
+
+      function logData() {
+        const mouseBrickCol = Math.floor(mouseX / BRICK_W);
+        const mouseBrickRow = Math.floor(mouseY / BRICK_H);
+        colorText(
+          `b=${mouseBrickCol},${mouseBrickRow};c=${mouseX},${mouseY}`,
+          mouseX,
+          mouseY,
+          'yellow'
+        );
+      }
+
+      function drawAll() {
+        colorRect(0, 0, canvas.width, canvas.height, 'black');
+        colorCircle(ballX, ballY, BALL_SIZE, 'white');
+        colorRect(
+          paddleX,
+          canvas.height - PADDLE_DIST_FROM_EDGE,
+          PADDLE_WIDTH,
+          PADDLE_THICKNESS,
+          'white'
+        );
+
+        drawBricks();
+        logData();
+      }
+
+      function updateAll() {
+        moveAll();
+        drawAll();
+      }
+    </script>
+  </body>
+</html>
